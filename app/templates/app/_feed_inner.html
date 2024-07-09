@@ -1,0 +1,73 @@
+{% for log in logs %}
+    <li x-data="{ open: false }"
+        :class="{ 'hover:bg-gray-100/50': open != true }"
+        class="relative flex flex-wrap w-full items-center space-x-4 transition-colors">
+        <div class="min-w-0 flex flex-col w-full">
+            <div class="flex flex-col justify-between items-center w-full sm:flex-row items-left gap-x-2.5 text-xs leading-5 text-gray-400 space-y-4 sm:space-y-0">
+                <code class="grid items-start p-2 grid-flow-col gap-x-4 break-words">
+                    <div class="items-center">
+                        <button @click="open =! open"
+                                class="text-gray-400 hover:text-gray-600 align-middle">
+                            <svg x-show="open != true"
+                                 xmlns="http://www.w3.org/2000/svg"
+                                 width="24"
+                                 height="24"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="currentColor"
+                                 stroke-width="2"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                                 class="w-4 h-4">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                            <svg x-show="open === true"
+                                 xmlns="http://www.w3.org/2000/svg"
+                                 width="24"
+                                 height="24"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="currentColor"
+                                 stroke-width="2"
+                                 stroke-linecap="round"
+                                 stroke-linejoin="round"
+                                 class="w-4 h-4">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </button>
+                        <span class="w-fit col-span-2">{{ log.created }}</span>
+                        <span @click="$dispatch('add-filter-body', {'project_id': '{{ log.project_id }}'})"
+                              class="text-green-600 col-span-1 p-0.5 bg-green-500/10 rounded cursor-pointer hover:bg-green-500/25 transition-colors">[{{ log.project_name }}]</span>
+                        <span @click="$dispatch('add-filter-body', {'level': '{{ log.level }}'})"
+                              class="cursor-pointer col-span-1 rounded p-0.5 transition-colors {% if log.level == 'INFO' or log.level == 'DEBUG' %} text-blue-600 bg-blue-500/10 hover:bg-blue-500/25 {% elif log.level == 'WARN' %} text-orange-600 bg-orange-500/10 hover:bg-orange-500/25 {% elif log.level == 'ERROR' %} text-red-600 bg-red-500/10 hover:bg-red-500/25 {% elif log.level == 'CRITICAL' %} text-red-600 bg-red-500/10 hover:bg-red-500/25 {% elif log.level == 'FATAL' %} text-red-600 bg-red-500/10 hover:bg-red-500/25 {% endif %}">[{{ log.level }}]</span>
+                    </div>
+                    <span class="text-gray-600 ">{{ log.context.message }}</span>
+                </code>
+            </div>
+            <div x-show="open" class="flex mx-4 flex-row items-center space-x-4 my-4">
+                <code class="flex flex-col w-full space-y-4 text-gray-600 border-gray-200 border bg-gray-100 rounded text-xs p-4">
+                    {% for key, value in log.context.items %}
+                        {% if value.items %}
+                            {% for k, v in value.items %}
+                                <div @click="open = false, $dispatch('add-filter-body', {'context.{{ key|escapejs }}.{{ k|escapejs }}': '{{ v|escapejs }}'})"
+                                     class="py-1 px-2 bg-gray-200 hover:bg-gray-300 hover:border-gray-400 border border-gray-300 transition-all rounded cursor-pointer w-fit">
+                                    <span>{{ key }}.{{ k }}:{{ v }}</span>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div @click="open = false, $dispatch('add-filter-body', {'context.{{ key|escapejs }}': '{{ value|escapejs }}'})"
+                                 class="py-1 px-2 bg-gray-200 hover:bg-gray-300 hover:border-gray-400 border border-gray-300 transition-all rounded cursor-pointer w-fit">
+                                <span>{{ key }}: {{ value }}</span>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </code>
+            </div>
+        </div>
+    </li>
+{% endfor %}
+{% if has_more == True %}
+    <li class="h-[1px]" hx-post="{% url 'api_search' %}" hx-trigger="revealed" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}' hx-vals='{"offset": {{ offset }}, "query": {% if query %}{{ query }}{% else %}{}
+    {% endif %}
+    }' hx-swap="beforeend" hx-target="#logs"></li>
+{% endif %}

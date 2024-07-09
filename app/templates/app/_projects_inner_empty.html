@@ -1,0 +1,23 @@
+<div id="projects-inner" class="my-auto">
+    <div class="text-center">
+        <svg xmlns="http://www.w3.org/2000/svg"
+             width="24"
+             height="24"
+             viewBox="0 0 24 24"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="2"
+             stroke-linecap="round"
+             stroke-linejoin="round"
+             class="mx-auto h-10 w-10 text-gray-400">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <h3 class="mt-2 text-base font-semibold text-gray-900">No projects</h3>
+        <p class="mt-1 text-sm text-gray-500">Create a project to get started.</p>
+        <button x-data
+                @click="$dispatch('open-new-project', {show: true})"
+                class="mt-4 inline-flex items-center justify-center px-4 py-2 text-sm font-medium tracking-wide text-white transition-colors duration-200 rounded-md bg-gray-950 hover:bg-gray-900 focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 focus:shadow-outline focus:outline-none">
+            New project
+        </button>
+    </div>
+</div>

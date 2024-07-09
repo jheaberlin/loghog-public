@@ -1,0 +1,41 @@
+<div x-data="{ open: false }"
+     @open-loader.window="open = $event.detail.open"
+     @keydown.escape.window="open = false"
+     class="relative z-50 w-auto h-auto">
+    <template x-teleport="body">
+        <div x-show="open"
+             class="fixed top-0 left-0 z-[99] flex items-center justify-center w-screen h-screen"
+             x-cloak>
+            <div x-show="open"
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="ease-in duration-300"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 @click="open=false"
+                 class="absolute inset-0 w-full h-full bg-black backdrop-blur-sm bg-opacity-40"></div>
+            <div x-show="open"
+                 x-trap.inert.noscroll="open"
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                 x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                 x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                 class="relative py-6 bg-white px-7 w-fit sm:rounded-lg">
+                <div class="flex items-center relative w-auto">
+                    <svg class="animate-spin -ml-1 mr-3 h-6 w-6 text-gray-400"
+                         xmlns="http://www.w3.org/2000/svg"
+                         fill="none"
+                         viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                        </path>
+                    </svg>
+                    <p>Retrieving logs...</p>
+                </div>
+            </div>
+        </div>
+    </template>
+</div>

@@ -1,0 +1,292 @@
+{% load static tailwind_tags %}
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>
+            {% block title %}{% endblock title %}
+        </title>
+        {% tailwind_css %}
+        <script defer
+                src="https://cdn.jsdelivr.net/npm/@alpinejs/mask@3.x.x/dist/cdn.min.js"></script>
+        <script defer
+                src="https://cdn.jsdelivr.net/npm/@alpinejs/persist@3.x.x/dist/cdn.min.js"></script>
+        <script defer
+                src="https://cdn.jsdelivr.net/npm/@alpinejs/focus@3.x.x/dist/cdn.min.js"></script>
+        <script defer
+                src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
+        <script src="https://unpkg.com/alpinejs" defer></script>
+        <script defer
+                src="https://unpkg.com/htmx.org@1.9.10"
+                integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC"
+                crossorigin="anonymous"></script>
+        <script type="text/javascript"
+                src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>
+        <script type="text/javascript"
+                src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+        <script type="text/javascript"
+                src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+        <link rel="stylesheet"
+              type="text/css"
+              href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+        <style>
+    [x-cloak] {
+      display: none !important;
+    }
+        </style>
+    </head>
+    <body class="h-screen">
+        <div id="app" class="min-h-full">
+            {% include 'app/_index_navigation.html' %}
+            <main class="pl-60 h-full">
+                {% block content %}
+                {% endblock content %}
+            </main>
+        </div>
+        {% include "app/_index_projects_create.html" %}
+        {% include "app/_index_projects_delete.html" %}
+        {% include "app/_index_projects_pause.html" %}
+        <div id="key_agg"
+             hx-post="{% url 'key_agg' %}"
+             hx-trigger="key_agg"
+             hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+             hx-swap="outerHTML"></div>
+        {% include "app/_feed_loader.html" %}
+        {% include "app/_feed_error.html" %}
+        <script>
+            document.addEventListener('alpine:init', () => {
+                Alpine.store('filter', {
+                    query: {}
+                })
+                Alpine.data('dateRangePicker', () => ({
+                    value: [],
+                    label: 'Last hour',
+                    init() {
+                        this.value = [moment().subtract(24, 'hours').format('YYYY-MM-DD HH:mm:ss'), moment().format('YYYY-MM-DD HH:mm:ss')];
+            
+                        $(this.$refs.picker).daterangepicker({
+                            startDate: this.value[0],
+                            endDate: this.value[1],
+                            timePicker: true,
+                            timePicker24Hour: true,
+                            showCustomRangeLabel: true,
+                            timePickerIncrement: 1,
+                            timePickerSeconds: true,
+                            autoApply: true,
+                            opens: 'left',
+                            locale: {
+                                format: 'YYYY-MM-DD HH:mm:ss'
+                            },
+                            ranges: {
+                                'Last 5 minutes': [moment().subtract(5, 'minutes'), moment()],
+                                'Last 30 minutes': [moment().subtract(30, 'minutes'), moment()],
+                                'Last hour': [moment().subtract(1, 'hours'), moment()],
+                                'Last 3 hours': [moment().subtract(3, 'hours'), moment()],
+                                'Last 6 hours': [moment().subtract(6, 'hours'), moment()],
+                                'Last 12 hours': [moment().subtract(12, 'hours'), moment()],
+                                'Last 24 hours': [moment().subtract(24, 'hours'), moment()],
+                                'Last 2 days': [moment().subtract(2, 'days'), moment()],
+                                'Last 7 days': [moment().subtract(7, 'days'), moment()],
+                                'Last 14 days': [moment().subtract(14, 'days'), moment()],
+                                'Last 30 days': [moment().subtract(30, 'days'), moment()]
+                            },
+                        }, 
+                        (start, end, label) => {
+                            this.value = [start.format('YYYY-MM-DD HH:mm:ss'), end.format('YYYY-MM-DD HH:mm:ss')];
+                            this.label = label
+                            this.$dispatch('add-filter', { created: 'IN '+this.value.join(' to ') });
+                        });
+            
+                        this.$watch('value', () => {
+                            if (this.label === 'Custom Range') {
+                            $(this.$refs.picker).data('daterangepicker').setStartDate(this.value[0]);
+                            $(this.$refs.picker).data('daterangepicker').setEndDate(this.value[1]);
+                            this.label = this.value.join(' to ')
+                        }
+                    
+                    });
+            
+                        this.$nextTick(() => {
+                            this.$dispatch('add-filter', { created: 'IN '+this.value.join(' to ') });
+                        });
+                    },
+                }));
+            })
+
+            let query_filter = {}
+
+            function getCSRF(name) {
+                let CSRFToken = null;
+                if (document.cookie && document.cookie !== "") {
+                    const cookies = document.cookie.split(";");
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + "=")) {
+                            CSRFToken = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return CSRFToken;
+            }
+
+            window.onload = function() {
+                htmx.trigger('#key_agg', 'key_agg')
+                const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                const payload = {
+                    tz: timeZone
+                };
+
+                fetch("{% url "update_tz" %}", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "X-CSRFToken": getCSRF("csrftoken")
+                            },
+                            body: JSON.stringify(payload)
+                        })
+                    .then(response => response.json())
+                    .then(data => {})
+                    .catch(error => {
+                        console.error("Error:", error);
+                    });
+                    htmx.trigger('#logs', 'get-feed')
+            };
+
+            document.addEventListener("htmx:sendError", function(event) {
+            
+                    let showError = new CustomEvent("open-feed-error", {
+                        detail: {
+                            open: true,
+                        },
+                        bubbles: true,
+                        cancelable: true
+                    });
+
+                document.dispatchEvent(showError)
+
+                htmx.process(document.body);
+            });
+
+            document.addEventListener("htmx:responseError", function(event) {
+
+                let showLoader = new CustomEvent("open-loader", {
+                    detail: {
+                        open: false,
+                    },
+                    bubbles: true,
+                    cancelable: true
+                });
+            
+                let showError = new CustomEvent("open-feed-error", {
+                    detail: {
+                        open: true,
+                    },
+                    bubbles: true,
+                    cancelable: true
+                })
+
+                document.dispatchEvent(showLoader)
+                document.dispatchEvent(showError)
+            
+            });
+            document.addEventListener("datetime-changed", function(event) {
+
+                console.log(event)
+            
+            });
+
+            document.addEventListener("htmx:afterSwap", function(event) {
+                if (event.detail.target.id === 'logs') {
+                    let showLoader = new CustomEvent("open-loader", {
+                        detail: {
+                            open: false,
+                        },
+                        bubbles: true,
+                        cancelable: true
+                    });
+
+                    document.dispatchEvent(showLoader)
+                }
+
+                htmx.process(document.body);
+            });
+            document.addEventListener("htmx:beforeRequest", function(event) {
+                if (event.detail.target.id === 'logs') {
+                    let showLoader = new CustomEvent("open-loader", {
+                        detail: {
+                            open: true,
+                        },
+                        bubbles: true,
+                        cancelable: true
+                    });
+
+                    document.dispatchEvent(showLoader)
+                }
+
+            });
+
+            document.addEventListener("remove-filter", function(event) {
+                let key = event.detail['key'];
+                console.log(key);
+                let query_filter = {
+                    ...Alpine.store('filter').query
+                };
+                delete query_filter[key];
+                console.log(query_filter);
+                Alpine.store('filter').query = query_filter;
+                console.log(Alpine.store('filter'));
+                document.getElementById("logs").setAttribute('hx-vals', JSON.stringify({
+                    'query': query_filter
+                }));
+                htmx.trigger("#logs", "get-feed");
+            });
+
+
+
+
+            document.addEventListener("add-filter", function(event) {
+                let firstKey = Object.keys(event.detail)[0];
+                let firstValue = event.detail[firstKey];
+
+                let query_filter = Alpine.store('filter').query;
+                query_filter[firstKey] = firstValue;
+
+                Alpine.store('filter').query = {
+                    ...query_filter
+                };
+
+                document.getElementById("logs").setAttribute('hx-vals', JSON.stringify({
+                    'query': query_filter
+                }));
+
+                htmx.trigger("#logs", "get-feed");
+            });
+
+
+            document.addEventListener("add-filter-body", function(event) {
+                let firstKey = Object.keys(event.detail)[0];
+                let firstValue = event.detail[firstKey];
+                let query_filter = Alpine.store('filter').query;
+
+                query_filter[firstKey] = firstValue;
+
+                Alpine.store('filter').query = {
+                    ...query_filter
+                };
+
+                document.getElementById("logs").setAttribute('hx-vals', JSON.stringify({
+                    'query': query_filter
+                }));
+
+                htmx.trigger("#logs", "get-feed");
+            });
+
+
+            function setAtt() {
+                document.getElementById("logs").setAttribute('hx-trigger', 'load')
+            }
+        </script>
+    </body>
+</html>

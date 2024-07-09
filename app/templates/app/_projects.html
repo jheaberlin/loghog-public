@@ -1,0 +1,21 @@
+{% extends 'app/index.html' %}
+{% block title %}
+Projects · Loghog
+{% endblock title %}
+{% block content %}
+    <div id="projects" class="h-screen flex flex-col">
+        <div class="sticky z-50 top-0 left-60 right-0 flex justify-between items-center border-b border-gray-200 bg-white px-4 py-5 sm:px-6">
+            <h3 class="text-base font-semibold leading-6 text-gray-900">Projects</h3>
+            <button x-data
+                    @click="$dispatch('open-new-project', {show: true})"
+                    class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium tracking-wide text-white transition-colors duration-200 rounded-md bg-gray-950 hover:bg-gray-900 focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 focus:shadow-outline focus:outline-none">
+                New project
+            </button>
+        </div>
+        {% if projects %}
+            {% include 'app/_projects_inner.html' %}
+        {% else %}
+            {% include 'app/_projects_inner_empty.html' %}
+        {% endif %}
+    </div>
+{% endblock content %}

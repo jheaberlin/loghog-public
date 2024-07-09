@@ -1,0 +1,73 @@
+{% extends 'app/index.html' %}
+{% block title %}
+Feed · Loghog
+{% endblock title %}
+{% block content %}
+    <div class="h-full max-w-full flex flex-col">
+        <div class="sticky z-50 top-0 left-60 right-0 border-b border-gray-200 bg-white px-4 py-5 sm:px-6">
+            <div class="-overflowhidden flex justify-between items-center">
+                <h3 class="text-base font-semibold leading-6 text-gray-900">Feed</h3>
+                <div class="flex space-x-4">
+                    <div x-data="dateRangePicker()" class="max-w-sm w-full border rounded-md border-gray-300 flex flex-row align-middle justify-between">
+                        <div class="flex items-center px-2 border-r border-gray-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+                              </svg>                              
+                        </div>
+                        <span x-ref="picker"
+                              x-text="label"
+                              class="flex w-fit caret-transparent text-center h-fit px-4 py-2 text-sm">
+                        </div>
+                        <button x-data
+                                @click="$dispatch('open-new-filter', {show: true})"
+                                class="inline-flex items-center justify-center px-3 py-2 text-sm font-medium tracking-wide text-white transition-colors duration-200 rounded-md bg-gray-950 hover:bg-gray-900 focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 focus:shadow-outline focus:outline-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z" />
+                              </svg>
+                        </button>
+                    </div>
+                </div>
+                <div x-data
+                     x-show="Object.entries($store.filter.query).filter(([key, _]) => key !== 'created').length > 0"
+                     class="flex overflow-hidden flex-row w-full mt-4 space-x-4 items-center">
+                    <code class="flex flex-column w-full overflow-hidden text-gray-600 border-gray-200 border bg-gray-100 rounded-md text-xs p-2 items-center justify-between">
+                        <div x-data class="flex grow gap-x-2 overflow-x-auto">
+                            <template x-for="[key, value] in Object.entries($store.filter.query)">
+                                <div x-show="key != 'created'"
+                                     x-data
+                                     class="flex p-1 bg-gray-300/60 rounded cursor-pointer h-6 items-center shrink-0 max-w-[75%]">
+                                    <span class="truncate"><span x-text="key"></span>: <span x-text="value"></span></span>
+                                    <button type="button"
+                                            @click="$dispatch('remove-filter', {key: key})"
+                                            class="inline-flex align-middle items-center p-1 ml-1 h-4 w-4 text-sm text-gray-600 bg-transparent rounded-sm hover:bg-gray-300"
+                                            aria-label="Remove">
+                                        <svg class="w-2 h-2"
+                                             aria-hidden="true"
+                                             xmlns="http://www.w3.org/2000/svg"
+                                             fill="none"
+                                             viewBox="0 0 14 14">
+                                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
+                                        </svg>
+                                        <span class="sr-only">Remove Filter</span>
+                                    </button>
+                                </div>
+                            </template>
+                        </div>
+                    </code>
+                </div>
+            </div>
+            <div class="h-full overflow-y-auto">
+                <div class="h-full inline-block min-w-full">
+                    <div class="h-full">
+                        <ul id="logs"
+                            class="h-full"
+                            hx-post="{% url 'api_search' %}"
+                            hx-trigger="get-feed"
+                            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                            hx-swap="innerHTML">
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endblock content %}

@@ -1,0 +1,25 @@
+<div class="flex flex-row w-full mt-4 space-x-4 items-center">
+    <code class="flex flex-column w-full text-gray-600 border-gray-200 border bg-gray-100 rounded-md text-xs p-2 items-center justify-between">
+        <div class="flex grow space-x-2 max-w-[85%]">
+            {% for key, value in filters.items %}
+                <div x-data
+                     class="flex p-1 bg-gray-300/60 rounded cursor-pointer h-6 items-center shrink-0 max-w-[75%]">
+                    <span class="truncate">{{ key }}: {{ value }}</span>
+                    <button type="button"
+                            @click="$dispatch('remove-filter', {key: '{{ key }}'})"
+                            class="inline-flex align-middle items-center p-1 ml-1 h-4 w-4 text-sm text-gray-600 bg-transparent rounded-sm hover:bg-gray-300"
+                            aria-label="Remove">
+                        <svg class="w-2 h-2"
+                             aria-hidden="true"
+                             xmlns="http://www.w3.org/2000/svg"
+                             fill="none"
+                             viewBox="0 0 14 14">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
+                        </svg>
+                        <span class="sr-only">Remove Filter</span>
+                    </button>
+                </div>
+            {% endfor %}
+        </div>
+    </code>
+</div>
